@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/homepage.dart';
 
 void main() {
@@ -40,6 +41,12 @@ class _MyHomePageState extends State<MyHomePage> {
   String _loginMessage = '';
   String? _token; // Store the token in memory
 
+  // Save username to SharedPreferences
+  Future<void> _saveUsername(String username) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('username', username);
+  }
+
   // Function to register user
   void _registerUser(String name, String password) async {
     final response = await http.post(
@@ -71,7 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         _loginMessage = 'Please fill in both fields to log in.';
       });
-      return; // Exit early if fields are empty
+      return;
     }
 
     final response = await http.post(
@@ -92,14 +99,18 @@ class _MyHomePageState extends State<MyHomePage> {
       if (responseBody.containsKey('data') &&
           responseBody['data']['token'] != null) {
         setState(() {
-          _token = responseBody['data']['token']; // Store the token
+          _token = responseBody['data']['token'];
           _loginMessage = 'Login successful! Token stored.';
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => HomePage(token: _token!)),
-          );
         });
-        print('Login success! Token: $_token');
+
+        // Save username and navigate to HomePage
+        await _saveUsername(name);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(token: _token!),
+          ),
+        );
       } else {
         setState(() {
           _loginMessage = 'Login failed: No token found in response';
@@ -158,8 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  _registerUser(
-                      _registerName, _registerPassword); // Register user
+                  _registerUser(_registerName, _registerPassword);
                 },
                 child: const Text('Register'),
               ),
@@ -199,7 +209,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  _loginUser(_loginName, _loginPassword); // Call login function
+                  _loginUser(_loginName, _loginPassword);
                 },
                 child: const Text('Login'),
               ),
