@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:io';
+import 'pages/homepage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -38,9 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String _loginName = '';
   String _loginPassword = '';
   String _loginMessage = '';
-  String _fetchMessage = '';
   String? _token; // Store the token in memory
-  List<dynamic> _teams = []; // List to store fetched teams
 
   // Function to register user
   void _registerUser(String name, String password) async {
@@ -69,6 +67,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // Function to login user and store token in memory
   void _loginUser(String name, String password) async {
+    if (name.isEmpty || password.isEmpty) {
+      setState(() {
+        _loginMessage = 'Please fill in both fields to log in.';
+      });
+      return; // Exit early if fields are empty
+    }
+
     final response = await http.post(
       Uri.parse('https://team-management-api.dops.tech/api/v2/auth/login'),
       headers: {
@@ -84,10 +89,15 @@ class _MyHomePageState extends State<MyHomePage> {
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = jsonDecode(response.body);
 
-      if (responseBody.containsKey('data') && responseBody['data']['token'] != null) {
+      if (responseBody.containsKey('data') &&
+          responseBody['data']['token'] != null) {
         setState(() {
           _token = responseBody['data']['token']; // Store the token
           _loginMessage = 'Login successful! Token stored.';
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomePage(token: _token!)),
+          );
         });
         print('Login success! Token: $_token');
       } else {
@@ -98,37 +108,6 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       setState(() {
         _loginMessage = 'Login failed: ${response.body}';
-      });
-    }
-  }
-
-  // Function to fetch teams
-  Future<void> fetchTeams() async {
-    if (_token != null) {
-      final headers = {
-        HttpHeaders.authorizationHeader: 'Bearer $_token',  // Add token here
-        'accept': 'application/json',
-      };
-
-      final response = await http.get(
-        Uri.parse('https://team-management-api.dops.tech/api/v2/teams'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        final responseJson = jsonDecode(response.body) as Map<String, dynamic>;
-        setState(() {
-          _teams = responseJson['data'] as List<dynamic>; // Store teams in the list
-          _fetchMessage = 'Teams fetched successfully';
-        });
-      } else {
-        setState(() {
-          _fetchMessage = 'Failed to fetch teams: ${response.body}';
-        });
-      }
-    } else {
-      setState(() {
-        _fetchMessage = 'No token found! Please log in first.';
       });
     }
   }
@@ -179,12 +158,12 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  _registerUser(_registerName, _registerPassword); // Register user
+                  _registerUser(
+                      _registerName, _registerPassword); // Register user
                 },
                 child: const Text('Register'),
               ),
               const SizedBox(height: 20),
-
               const Text(
                 'Login',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -226,33 +205,6 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               const SizedBox(height: 10),
               Text(_loginMessage, style: const TextStyle(color: Colors.red)),
-
-              // Button to fetch teams
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: fetchTeams, // Fetch teams when pressed
-                child: const Text('Fetch Teams'),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(_fetchMessage),
-              ),
-
-              // Display fetched teams in a list
-              const SizedBox(height: 20),
-              _teams.isNotEmpty
-                  ? ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(), // Make the ListView scrollable inside the SingleChildScrollView
-                itemCount: _teams.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(_teams[index]['name']), // Display team name
-                    subtitle: Text('Team ID: ${_teams[index]['id']}'), // Display team ID
-                  );
-                },
-              )
-                  : const Text('No teams fetched.'),
             ],
           ),
         ),
