@@ -14,12 +14,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'TeamFormer',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'TeamFormer Home Page'),
     );
   }
 }
@@ -38,8 +38,9 @@ class _MyHomePageState extends State<MyHomePage> {
   String _registerPassword = '';
   String _loginName = '';
   String _loginPassword = '';
-  String _loginMessage = '';
-  String? _token; // Store the token in memory
+  String _message = '';
+  String? _token;
+  bool _showRegisterForm = false;
 
   // Save username to SharedPreferences
   Future<void> _saveUsername(String username) async {
@@ -47,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await prefs.setString('username', username);
   }
 
-  // Function to register user
+  // Function to register user and log them in
   void _registerUser(String name, String password) async {
     final response = await http.post(
       Uri.parse('https://team-management-api.dops.tech/api/v2/auth/register'),
@@ -63,11 +64,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (response.statusCode == 201) {
       setState(() {
-        _loginMessage = 'User registered successfully. You can now log in.';
+        _message = 'User registered successfully. Logging in...';
       });
+      _loginUser(name, password); // Log the user in after registration
     } else {
       setState(() {
-        _loginMessage = 'Failed to register: ${response.body}';
+        _message = 'Failed to register: ${response.body}';
       });
     }
   }
@@ -76,7 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _loginUser(String name, String password) async {
     if (name.isEmpty || password.isEmpty) {
       setState(() {
-        _loginMessage = 'Please fill in both fields to log in.';
+        _message = 'Please fill in both fields to log in.';
       });
       return;
     }
@@ -100,10 +102,9 @@ class _MyHomePageState extends State<MyHomePage> {
           responseBody['data']['token'] != null) {
         setState(() {
           _token = responseBody['data']['token'];
-          _loginMessage = 'Login successful! Token stored.';
+          _message = 'Login successful! Redirecting...';
         });
 
-        // Save username and navigate to HomePage
         await _saveUsername(name);
         Navigator.pushReplacement(
           context,
@@ -113,12 +114,12 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       } else {
         setState(() {
-          _loginMessage = 'Login failed: No token found in response';
+          _message = 'Login failed: No token found in response';
         });
       }
     } else {
       setState(() {
-        _loginMessage = 'Login failed: ${response.body}';
+        _message = 'Login failed: ${response.body}';
       });
     }
   }
@@ -127,94 +128,123 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Register and Login'),
+        title: const Text('Teamformer'),
       ),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              const Text(
-                'Register',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Register Username',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _registerName = value;
-                    });
-                  },
+              if (_showRegisterForm)
+                Column(
+                  children: [
+                    const Text(
+                      'Register',
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          labelText: 'Register Username',
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _registerName = value;
+                          });
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                          border: OutlineInputBorder(),
+                        ),
+                        obscureText: true,
+                        onChanged: (value) {
+                          setState(() {
+                            _registerPassword = value;
+                          });
+                        },
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _registerUser(_registerName, _registerPassword);
+                      },
+                      child: const Text('Register'),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _showRegisterForm = false;
+                        });
+                      },
+                      child: const Text('Back to Login'),
+                    ),
+                  ],
+                )
+              else
+                Column(
+                  children: [
+                    const Text(
+                      'Login',
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          labelText: 'Username',
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _loginName = value;
+                          });
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                          border: OutlineInputBorder(),
+                        ),
+                        obscureText: true,
+                        onChanged: (value) {
+                          setState(() {
+                            _loginPassword = value;
+                          });
+                        },
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _loginUser(_loginName, _loginPassword);
+                      },
+                      child: const Text('Login'),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _showRegisterForm = true;
+                        });
+                      },
+                      child: const Text('Register'),
+                    ),
+                  ],
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Register Password',
-                    border: OutlineInputBorder(),
-                  ),
-                  obscureText: true,
-                  onChanged: (value) {
-                    setState(() {
-                      _registerPassword = value;
-                    });
-                  },
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  _registerUser(_registerName, _registerPassword);
-                },
-                child: const Text('Register'),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Login',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Login Username',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _loginName = value;
-                    });
-                  },
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Login Password',
-                    border: OutlineInputBorder(),
-                  ),
-                  obscureText: true,
-                  onChanged: (value) {
-                    setState(() {
-                      _loginPassword = value;
-                    });
-                  },
-                ),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  _loginUser(_loginName, _loginPassword);
-                },
-                child: const Text('Login'),
-              ),
               const SizedBox(height: 10),
-              Text(_loginMessage, style: const TextStyle(color: Colors.red)),
+              Text(_message, style: const TextStyle(color: Colors.red)),
             ],
           ),
         ),
