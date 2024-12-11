@@ -1,9 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'manage_teams.dart';
+import 'manage_events.dart';
 
 class HomePage extends StatefulWidget {
   final String token;
@@ -59,6 +58,8 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 20),
+              Text('Hello, $_username!'),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -74,6 +75,19 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
+                onPressed: () {
+                  // Navigate to CreateEventScreen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ManageEventsPage(
+                        token: widget.token,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Manage Events'),
+
                 onPressed: _logout,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red, // Red color for logout button

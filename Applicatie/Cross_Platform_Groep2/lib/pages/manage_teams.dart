@@ -145,6 +145,21 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
         });
         fetchTeams(); // Re-fetch teams after deletion
       } else {
+        // Parse response body for detailed error message
+        final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
+        final errorMessage =
+            responseBody['message']?.toString() ?? 'Unknown error';
+
+        // Check for specific error cases
+        if (errorMessage.toLowerCase().contains('teamnotfound')) {
+          setState(() {
+            _deleteMessage = 'Failed to delete team: Team not found';
+          });
+        } else {
+          setState(() {
+            _deleteMessage = 'Failed to delete team: Team does not exist.';
+          });
+        }
         setState(() {
           _deleteMessage = 'Failed to delete team: ${response.body}';
         });
@@ -184,7 +199,7 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
       });
     }
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -339,6 +354,8 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('Team ID: ${team['id']}'),
+                                const SizedBox(height: 8),
+                                const Text('Members:'),
                                 Text('Description: $description'),
                                 const SizedBox(height: 8),
                                 Text('Members:'),
