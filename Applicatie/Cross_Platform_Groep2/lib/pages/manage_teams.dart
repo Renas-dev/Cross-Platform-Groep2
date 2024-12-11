@@ -15,8 +15,13 @@ class CreateTeamPage extends StatefulWidget {
 
 class _CreateTeamPageState extends State<CreateTeamPage> {
   String _teamName = '';
+  String _teamDescription = '';
   String _createMessage = '';
   String _deleteMessage = '';
+  String _editMessage = '';
+  String _teamIdToEdit = '';
+  String _newTeamName = '';
+  String _newTeamDescription = '';
   String _teamIdToDelete = '';
   String _fetchMessage = '';
   List<dynamic> _teams = [];
@@ -85,27 +90,38 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
     }
   }
 
-  // Function to create a team
-  Future<void> createTeam(String teamName) async {
+  // Function to edit a team
+  Future<void> editTeam(
+      String teamId, String newTeamName, String newTeamDescription) async {
     final headers = {
       HttpHeaders.authorizationHeader: 'Bearer ${widget.token}',
       'Content-Type': 'application/json',
       'accept': 'application/json',
     };
 
-    final response = await http.post(
-      Uri.parse('https://team-management-api.dops.tech/api/v2/teams'),
-      headers: headers,
-      body: jsonEncode({'name': teamName}),
-    );
+    try {
+      final response = await http.put(
+        Uri.parse('https://team-management-api.dops.tech/api/v2/teams/$teamId'),
+        headers: headers,
+        body: jsonEncode({
+          'name': newTeamName,
+          'description': newTeamDescription,
+        }),
+      );
 
-    if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
+        setState(() {
+          _editMessage = 'Team updated successfully!';
+        });
+        fetchTeams(); // Refresh the teams list after editing
+      } else {
+        setState(() {
+          _editMessage = 'Failed to update team: ${response.body}';
+        });
+      }
+    } catch (e) {
       setState(() {
-        _createMessage = 'Team created successfully';
-      });
-    } else {
-      setState(() {
-        _createMessage = 'Failed to create team: ${response.body}';
+        _editMessage = 'An error occurred: $e';
       });
     }
   }
@@ -127,7 +143,7 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
         setState(() {
           _deleteMessage = 'Team deleted successfully';
         });
-        fetchTeams(); // Re-fetch teams after successful deletion
+        fetchTeams(); // Re-fetch teams after deletion
       } else {
         // Parse response body for detailed error message
         final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
@@ -144,6 +160,9 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
             _deleteMessage = 'Failed to delete team: Team does not exist.';
           });
         }
+        setState(() {
+          _deleteMessage = 'Failed to delete team: ${response.body}';
+        });
       }
     } catch (e) {
       setState(() {
@@ -152,6 +171,35 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
     }
   }
 
+  // Function to create a team
+  Future<void> createTeam(String teamName, String teamDescription) async {
+    final headers = {
+      HttpHeaders.authorizationHeader: 'Bearer ${widget.token}',
+      'Content-Type': 'application/json',
+      'accept': 'application/json',
+    };
+
+    final response = await http.post(
+      Uri.parse('https://team-management-api.dops.tech/api/v2/teams'),
+      headers: headers,
+      body: jsonEncode({
+        'name': teamName,
+        'description': teamDescription,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      setState(() {
+        _createMessage = 'Team created successfully';
+      });
+      fetchTeams(); // Refresh teams after creation
+    } else {
+      setState(() {
+        _createMessage = 'Failed to create team: ${response.body}';
+      });
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -179,17 +227,79 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
                   border: OutlineInputBorder(),
                 ),
               ),
+              const SizedBox(height: 10),
+              TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _teamDescription = value;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Team Description',
+                  border: OutlineInputBorder(),
+                ),
+              ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  createTeam(_teamName); // Call create team function
+                  createTeam(_teamName, _teamDescription);
                 },
                 child: const Text('Create Team'),
               ),
-              const SizedBox(height: 10),
               Text(
                 _createMessage,
                 style: const TextStyle(color: Colors.green),
+              ),
+              const Divider(height: 40, thickness: 1),
+              const Text(
+                'Edit Team',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _teamIdToEdit = value;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: 'Team ID',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _newTeamName = value;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: 'New Team Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _newTeamDescription = value;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: 'New Team Description',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  editTeam(_teamIdToEdit, _newTeamName, _newTeamDescription);
+                },
+                child: const Text('Edit Team'),
+              ),
+              Text(
+                _editMessage,
+                style: const TextStyle(color: Colors.blue),
               ),
               const Divider(height: 40, thickness: 1),
               const Text(
@@ -210,14 +320,13 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  deleteTeam(_teamIdToDelete); // Call delete team function
+                  deleteTeam(_teamIdToDelete);
                 },
                 child: const Text('Delete Team'),
               ),
-              const SizedBox(height: 10),
               Text(
                 _deleteMessage,
-                style: const TextStyle(color: Colors.green),
+                style: const TextStyle(color: Colors.red),
               ),
               const Divider(height: 40, thickness: 1),
               ElevatedButton(
@@ -233,6 +342,8 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
                       itemBuilder: (context, index) {
                         final team = _teams[index];
                         final members = team['members'] as List<dynamic>;
+                        final description =
+                            team['description'] ?? 'No description available';
 
                         return Card(
                           margin: const EdgeInsets.symmetric(
@@ -245,6 +356,9 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
                                 Text('Team ID: ${team['id']}'),
                                 const SizedBox(height: 8),
                                 const Text('Members:'),
+                                Text('Description: $description'),
+                                const SizedBox(height: 8),
+                                Text('Members:'),
                                 for (var member in members)
                                   Text('- ${member['name']}'),
                               ],

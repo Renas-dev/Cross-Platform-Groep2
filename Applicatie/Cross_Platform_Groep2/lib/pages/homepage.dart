@@ -26,8 +26,17 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadUsername() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _username = prefs.getString('username') ?? '';
+      _username = prefs.getString('username') ?? 'Guest';
     });
+  }
+
+  // Log out user and redirect to login page
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('username'); // Clear username
+    await prefs.remove('token'); // Clear token
+
+    Navigator.pushReplacementNamed(context, '/'); // Navigate to login page
   }
 
   @override
@@ -41,7 +50,13 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Welcome to the Home Page!'),
+              Text(
+                'Welcome, $_username!',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 20),
               Text('Hello, $_username!'),
               const SizedBox(height: 20),
@@ -72,6 +87,12 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
                 child: const Text('Manage Events'),
+
+                onPressed: _logout,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red, // Red color for logout button
+                ),
+                child: const Text('Log Out'),
               ),
             ],
           ),
