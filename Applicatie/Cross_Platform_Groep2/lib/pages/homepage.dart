@@ -76,7 +76,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
-                  // Navigate to CreateEventScreen
+                  // Navigate to ManageEventsPage
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -87,8 +87,10 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
                 child: const Text('Manage Events'),
-
-                onPressed: _logout,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _logout, // Now this only handles logout
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red, // Red color for logout button
                 ),
