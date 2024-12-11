@@ -53,14 +53,14 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
 
         if (response.statusCode == 200) {
           final responseJson =
-          jsonDecode(response.body) as Map<String, dynamic>;
+              jsonDecode(response.body) as Map<String, dynamic>;
           final allTeams = responseJson['data'] as List<dynamic>;
 
           // Filter teams by username
           final userTeams = allTeams.where((team) {
             final members = team['members'] as List<dynamic>;
             return members.any((member) =>
-            member['name'].toString().toLowerCase() ==
+                member['name'].toString().toLowerCase() ==
                 _username.toLowerCase());
           }).toList();
 
@@ -131,7 +131,8 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
       } else {
         // Parse response body for detailed error message
         final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
-        final errorMessage = responseBody['message']?.toString() ?? 'Unknown error';
+        final errorMessage =
+            responseBody['message']?.toString() ?? 'Unknown error';
 
         // Check for specific error cases
         if (errorMessage.toLowerCase().contains('teamnotfound')) {
@@ -150,7 +151,6 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -227,32 +227,32 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
               const SizedBox(height: 20),
               _teams.isNotEmpty
                   ? ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _teams.length,
-                itemBuilder: (context, index) {
-                  final team = _teams[index];
-                  final members = team['members'] as List<dynamic>;
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _teams.length,
+                      itemBuilder: (context, index) {
+                        final team = _teams[index];
+                        final members = team['members'] as List<dynamic>;
 
-                  return Card(
-                    margin: const EdgeInsets.symmetric(
-                        vertical: 8, horizontal: 16),
-                    child: ListTile(
-                      title: Text(team['name']),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Team ID: ${team['id']}'),
-                          const SizedBox(height: 8),
-                          Text('Members:'),
-                          for (var member in members)
-                            Text('- ${member['name']}'),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              )
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 8, horizontal: 16),
+                          child: ListTile(
+                            title: Text(team['name']),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Team ID: ${team['id']}'),
+                                const SizedBox(height: 8),
+                                const Text('Members:'),
+                                for (var member in members)
+                                  Text('- ${member['name']}'),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    )
                   : Text(_fetchMessage),
             ],
           ),
