@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'view_event.dart';
 
 class ManageEventsPage extends StatefulWidget {
   final String token;
@@ -19,7 +20,6 @@ class _ManageEventsPageState extends State<ManageEventsPage> {
   String _teamIdToCreate = '';
   String _createMessage = '';
   String _deleteMessage = '';
-  String _eventIdToDelete = '';
   String _fetchMessage = '';
   List<dynamic> _events = [];
   List<dynamic> _teams = [];
@@ -311,19 +311,33 @@ class _ManageEventsPageState extends State<ManageEventsPage> {
                 'Create Event',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              DropdownButton<String>(
-                value: _teamIdToCreate.isEmpty ? null : _teamIdToCreate,
-                onChanged: (newValue) {
-                  setState(() {
-                    _teamIdToCreate = newValue ?? '';
-                  });
-                },
-                items: _teams.map((team) {
-                  return DropdownMenuItem<String>(
-                    value: team['id'].toString(),
-                    child: Text(team['name']),
-                  );
-                }).toList(),
+              Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Align to the left
+                children: [
+                  const Text(
+                    'Teams',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Align(
+                    alignment:
+                        Alignment.centerLeft, // Align dropdown to the left
+                    child: DropdownButton<String>(
+                      value: _teamIdToCreate.isEmpty ? null : _teamIdToCreate,
+                      onChanged: (newValue) {
+                        setState(() {
+                          _teamIdToCreate = newValue ?? '';
+                        });
+                      },
+                      items: _teams.map((team) {
+                        return DropdownMenuItem<String>(
+                          value: team['id'].toString(),
+                          child: Text(team['name']),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
               TextField(
                 onChanged: (value) {
@@ -382,69 +396,84 @@ class _ManageEventsPageState extends State<ManageEventsPage> {
                 onPressed: createEvent,
                 child: const Text('Create Event'),
               ),
-              Text(
-                _createMessage,
-                style: const TextStyle(color: Colors.green),
-              ),
-              const SizedBox(height: 20),
-              // Event deletion section
-              const Text(
-                'Delete Event',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _eventIdToDelete = value;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Event ID'),
-              ),
-              ElevatedButton(
-                onPressed: () => deleteEvent(_eventIdToDelete),
-                child: const Text('Delete Event'),
-              ),
-              Text(
-                _deleteMessage,
-                style: const TextStyle(color: Colors.red),
-              ),
-              const SizedBox(height: 20),
+              if (_createMessage.isNotEmpty) Text(_createMessage),
+
+              const SizedBox(height: 16),
+
               // Event list section
               const Text(
-                'Your Events',
+                'Manage Existing Events',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              Text(
-                _fetchMessage,
-                style: const TextStyle(color: Colors.blue),
-              ),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: _events.length,
-                itemBuilder: (context, index) {
-                  final event = _events[index];
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: ListTile(
-                      title: Text(event['title']),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Start Time: ${event['datetimeStart']}'),
-                          Text('End Time: ${event['datetimeEnd']}'),
-                          Text(
-                              'Location: Latitude ${event['location']['latitude']}, Longitude ${event['location']['longitude']}'),
-                          Text(
-                              'Instructions: ${event['metadata']['instructions'] ?? "No instructions"}'),
-                          Text(
-                              'Description: ${event['description'] ?? "No description"}'),
-                          Text('Id: ${event['id'] ?? "No id"}'),
-                        ],
+              if (_events.isEmpty)
+                const Center(child: Text('No events found.'))
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _events.length,
+                  itemBuilder: (context, index) {
+                    final event = _events[index];
+                    final startTime = DateTime.parse(event['datetimeStart']);
+                    final endTime = DateTime.parse(event['datetimeEnd']);
+                    final latitude = event['location']['latitude'].toString();
+                    final longitude = event['location']['longitude'].toString();
+                    final instructions =
+                        event['metadata']['instructions'] ?? 'No instructions';
+
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 8.0,
+                          horizontal: 10.0), // Space around each event
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                            color: Colors.grey,
+                            width: 1.5), // Border color and width
+                        borderRadius:
+                            BorderRadius.circular(8.0), // Rounded corners
                       ),
-                    ),
-                  );
-                },
-              )
+                      child: ListTile(
+                        title: Text(event['title']),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Description: ${event['description']}'),
+                            Text('Start Time: ${startTime.toLocal()}'),
+                            Text('End Time: ${endTime.toLocal()}'),
+                            Text('Latitude: $latitude'),
+                            Text('Longitude: $longitude'),
+                            Text('Instructions: $instructions'),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove_red_eye),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EventDetailPage(
+                                      token: widget.token,
+                                      eventId: event['id'].toString(),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () {
+                                deleteEvent(event['id'].toString());
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              if (_deleteMessage.isNotEmpty) Text(_deleteMessage),
             ],
           ),
         ),
