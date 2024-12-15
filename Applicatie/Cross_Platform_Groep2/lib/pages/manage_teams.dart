@@ -199,7 +199,7 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -358,7 +358,7 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
                                 const Text('Members:'),
                                 Text('Description: $description'),
                                 const SizedBox(height: 8),
-                                Text('Members:'),
+                                const Text('Members:'),
                                 for (var member in members)
                                   Text('- ${member['name']}'),
                               ],
