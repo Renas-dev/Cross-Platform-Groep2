@@ -7,26 +7,27 @@ on:
 
 jobs:
   build-web:
+    name: Build Web Release # This shows as the job name in the GitHub UI
     runs-on: ubuntu-latest
 
     steps:
       # Step 1: Checkout the code
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       # Step 2: Set up Flutter
-      - name: Set up Flutter
+      - name: Set up Flutter Environment
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.27.1' # Specify the required Flutter version
 
       # Step 3: Navigate to the Flutter app directory
-      - name: Navigate to Flutter app
+      - name: Navigate to Flutter App Directory
         working-directory: Applicatie/Cross_Platform_Groep2
         run: echo "Navigating to Flutter app directory"
 
       # Step 4: Install dependencies
-      - name: Install dependencies
+      - name: Install Dependencies
         working-directory: Applicatie/Cross_Platform_Groep2
         run: flutter pub get
 
@@ -35,7 +36,7 @@ jobs:
         working-directory: Applicatie/Cross_Platform_Groep2
         run: flutter build web
 
-      # Step 6: Verify build output
-      - name: Verify Build
+      # Step 6: Verify Build Output
+      - name: Verify Build Output
         working-directory: Applicatie/Cross_Platform_Groep2
         run: ls build/web
