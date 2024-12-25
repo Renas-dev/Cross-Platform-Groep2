@@ -6,37 +6,37 @@ on:
       - main
 
 jobs:
-  build-web:
-    name: Build Web Release
+  checkout:
+    name: Checkout Code
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Set up Flutter
-      - name: Set up Flutter Environment
+  setup-flutter:
+    name: Set up Flutter Environment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.27.1'
 
-      # Step 3: Navigate to the Flutter app directory
-      - name: Navigate to Flutter App Directory
-        working-directory: Applicatie/Cross_Platform_Groep2
-        run: echo "Navigating to Flutter app directory"
+  build:
+    name: Build Web Application
+    runs-on: ubuntu-latest
+    needs: setup-flutter
 
-      # Step 4: Install dependencies
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
       - name: Install Flutter Dependencies
         working-directory: Applicatie/Cross_Platform_Groep2
         run: flutter pub get
 
-      # Step 5: Build for Web
       - name: Build Flutter Web Application
         working-directory: Applicatie/Cross_Platform_Groep2
         run: flutter build web
-
-      # Step 6: Verify Build Output
-      - name: Verify Build Output
-        working-directory: Applicatie/Cross_Platform_Groep2
-        run: ls build/web
