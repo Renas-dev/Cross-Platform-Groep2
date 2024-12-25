@@ -1,0 +1,39 @@
+name: Flutter CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  flutter-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      # Step 3: Navigate to the Flutter app directory
+      - name: Navigate to Flutter app
+        working-directory: Applicatie/Cross_Platform_Groep2
+        run: echo "Navigating to Flutter app directory"
+
+      # Step 4: Install dependencies
+      - name: Install dependencies
+        working-directory: Applicatie/Cross_Platform_Groep2
+        run: flutter pub get
+
+      # Step 5: Run tests
+      - name: Run tests
+        working-directory: Applicatie/Cross_Platform_Groep2
+        run: flutter test
