@@ -1,42 +1,44 @@
-name: Build Web Release
+name: Flutter CI
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  checkout:
-    name: Checkout Code
+  flutter-ci:
+    name: Flutter Continuous Integration
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout the code
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-  setup-flutter:
-    name: Set up Flutter Environment
-    runs-on: ubuntu-latest
-
-    steps:
+      # Step 2: Set up Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.1'
+          flutter-version: '3.27.1' # Ensure compatibility with Dart ^3.5.1
 
-  build:
-    name: Build Web Application
-    runs-on: ubuntu-latest
-    needs: setup-flutter
+      # Step 3: Verify Flutter installation
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
+      # Step 4: Navigate to the Flutter app directory
+      - name: Navigate to Flutter App
+        working-directory: Applicatie/Cross_Platform_Groep2
+        run: echo "Navigating to Flutter app directory"
 
+      # Step 5: Install dependencies
       - name: Install Flutter Dependencies
         working-directory: Applicatie/Cross_Platform_Groep2
         run: flutter pub get
 
-      - name: Build Flutter Web Application
+      # Step 6: Run tests
+      - name: Run Flutter Tests
         working-directory: Applicatie/Cross_Platform_Groep2
-        run: flutter build web
+        run: flutter test
