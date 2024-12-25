@@ -18,7 +18,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: '3.13.0' # Specify the required version
 
       # Step 3: Navigate to the Flutter app directory
       - name: Navigate to Flutter app
