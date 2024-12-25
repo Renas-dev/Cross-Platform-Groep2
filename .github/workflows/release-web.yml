@@ -19,36 +19,24 @@ jobs:
       - name: Set up Flutter Environment
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.1' # Specify the required Flutter version
+          flutter-version: '3.27.1'
 
       # Step 3: Navigate to the Flutter app directory
       - name: Navigate to Flutter App Directory
         working-directory: Applicatie/Cross_Platform_Groep2
-        run: |
-          echo "::group::Navigating to Flutter App Directory"
-          echo "Navigating to Flutter app directory"
-          echo "::endgroup::"
+        run: echo "Navigating to Flutter app directory"
 
       # Step 4: Install dependencies
-      - name: Install Dependencies
+      - name: Install Flutter Dependencies
         working-directory: Applicatie/Cross_Platform_Groep2
-        run: |
-          echo "::group::Installing Dependencies"
-          flutter pub get
-          echo "::endgroup::"
+        run: flutter pub get
 
       # Step 5: Build for Web
-      - name: Build Flutter Web
+      - name: Build Flutter Web Application
         working-directory: Applicatie/Cross_Platform_Groep2
-        run: |
-          echo "::group::Building Flutter Web"
-          flutter build web
-          echo "::endgroup::"
+        run: flutter build web
 
       # Step 6: Verify Build Output
       - name: Verify Build Output
         working-directory: Applicatie/Cross_Platform_Groep2
-        run: |
-          echo "::group::Verifying Build Output"
-          ls build/web
-          echo "::endgroup::"
+        run: ls build/web
