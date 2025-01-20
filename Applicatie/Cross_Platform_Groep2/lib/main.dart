@@ -141,11 +141,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     const Text(
                       'Register',
                       style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: TextField(
+                        key: const Key('register_username_field'), // Key toegevoegd
                         decoration: const InputDecoration(
                           labelText: 'Register Username',
                           border: OutlineInputBorder(),
@@ -160,6 +161,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: TextField(
+                        key: const Key('register_password_field'), // Key toegevoegd
                         decoration: const InputDecoration(
                           labelText: 'Password',
                           border: OutlineInputBorder(),
@@ -195,11 +197,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     const Text(
                       'Login',
                       style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: TextField(
+                        key: const Key('username_field'), // Key toegevoegd
                         decoration: const InputDecoration(
                           labelText: 'Username',
                           border: OutlineInputBorder(),
@@ -214,6 +217,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: TextField(
+                        key: const Key('password_field'), // Key toegevoegd
                         decoration: const InputDecoration(
                           labelText: 'Password',
                           border: OutlineInputBorder(),
@@ -227,6 +231,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                     ElevatedButton(
+                      key: const Key('login_button'), // Key toegevoegd
                       onPressed: () {
                         _loginUser(_loginName, _loginPassword);
                       },
