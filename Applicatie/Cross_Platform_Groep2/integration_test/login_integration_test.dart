@@ -34,7 +34,7 @@ void main() {
     // Wacht tot de navigatie compleet is
     await tester.pumpAndSettle();
     await addDelay();
-    // Controleer of de navigatie naar de HomePage succesvol was
+    // Controleer of de navigatie naar de HomePage succesvol was een sluit de applicatie af
     expect(find.text('Welcome, Renas!'), findsOneWidget);
     await addDelay();
   });
