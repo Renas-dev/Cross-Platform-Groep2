@@ -80,8 +80,7 @@ class _EventDetailPageState extends State<EventDetailPage> {
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start, // Aligning text to the left
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Title: ${_eventDetails['title']}',
                           style: const TextStyle(fontWeight: FontWeight.bold)),

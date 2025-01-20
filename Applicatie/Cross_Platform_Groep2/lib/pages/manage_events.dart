@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'view_event.dart';
+import 'edit_event.dart';
 
 class ManageEventsPage extends StatefulWidget {
   final String token;
@@ -140,8 +141,9 @@ class _ManageEventsPageState extends State<ManageEventsPage> {
     }
   }
 
-  // Create event function
+  // Create event function with validation
   Future<void> createEvent() async {
+    // Validate if all fields are filled
     if (_teamIdToCreate.isEmpty ||
         _eventTitle.isEmpty ||
         _eventStartTime == null ||
@@ -183,7 +185,7 @@ class _ManageEventsPageState extends State<ManageEventsPage> {
       setState(() {
         _createMessage = 'Event created successfully!';
       });
-      fetchEvents();
+      fetchEvents(); // Refresh events after creation
     } else {
       setState(() {
         _createMessage = 'Failed to create event: ${response.body}';
@@ -229,72 +231,6 @@ class _ManageEventsPageState extends State<ManageEventsPage> {
     }
   }
 
-  // Select start time and date
-  Future<void> _selectStartTime(BuildContext context) async {
-    final DateTime? selectedDate = await showDatePicker(
-      context: context,
-      initialDate: _eventStartTime ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (selectedDate != null) {
-      final TimeOfDay? selectedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(_eventStartTime ?? DateTime.now()),
-      );
-
-      if (selectedTime != null) {
-        final selectedDateTime = DateTime(
-          selectedDate.year,
-          selectedDate.month,
-          selectedDate.day,
-          selectedTime.hour,
-          selectedTime.minute,
-        );
-
-        setState(() {
-          _eventStartTime = selectedDateTime;
-          _startTimeController.text =
-              '${"${selectedDateTime.toLocal()}".split(' ')[0]} ${selectedTime.format(context)}';
-        });
-      }
-    }
-  }
-
-  // Select end time and date
-  Future<void> _selectEndTime(BuildContext context) async {
-    final DateTime? selectedDate = await showDatePicker(
-      context: context,
-      initialDate: _eventEndTime ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (selectedDate != null) {
-      final TimeOfDay? selectedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(_eventEndTime ?? DateTime.now()),
-      );
-
-      if (selectedTime != null) {
-        final selectedDateTime = DateTime(
-          selectedDate.year,
-          selectedDate.month,
-          selectedDate.day,
-          selectedTime.hour,
-          selectedTime.minute,
-        );
-
-        setState(() {
-          _eventEndTime = selectedDateTime;
-          _endTimeController.text =
-              '${"${selectedDateTime.toLocal()}".split(' ')[0]} ${selectedTime.format(context)}';
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -306,173 +242,178 @@ class _ManageEventsPageState extends State<ManageEventsPage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Event creation section
               const Text(
                 'Create Event',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start, // Align to the left
-                children: [
-                  const Text(
-                    'Teams',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Align(
-                    alignment:
-                        Alignment.centerLeft, // Align dropdown to the left
-                    child: DropdownButton<String>(
-                      value: _teamIdToCreate.isEmpty ? null : _teamIdToCreate,
-                      onChanged: (newValue) {
-                        setState(() {
-                          _teamIdToCreate = newValue ?? '';
-                        });
-                      },
-                      items: _teams.map((team) {
-                        return DropdownMenuItem<String>(
-                          value: team['id'].toString(),
-                          child: Text(team['name']),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
-              ),
-              TextField(
-                onChanged: (value) {
+              // Team dropdown with consistent styling
+              DropdownButtonFormField<String>(
+                value: _teamIdToCreate.isEmpty ? null : _teamIdToCreate,
+                hint: const Text('Select Team'),
+                onChanged: (String? newValue) {
                   setState(() {
-                    _eventTitle = value;
+                    _teamIdToCreate = newValue ?? '';
                   });
                 },
-                decoration: const InputDecoration(labelText: 'Event Title'),
+                decoration: const InputDecoration(
+                  labelText: 'Team',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
+                items: _teams.map<DropdownMenuItem<String>>((team) {
+                  return DropdownMenuItem<String>(
+                    value: team['id'].toString(),
+                    child: Text(team['name']),
+                  );
+                }).toList(),
               ),
+              const SizedBox(height: 10),
+              // Event Title Field with consistent styling
               TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _eventDescription = value;
-                  });
-                },
-                decoration:
-                    const InputDecoration(labelText: 'Event Description'),
+                onChanged: (value) => _eventTitle = value,
+                decoration: const InputDecoration(
+                  labelText: 'Event Title',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
               ),
+              const SizedBox(height: 10),
+              // Event Description Field with consistent styling
+              TextField(
+                onChanged: (value) => _eventDescription = value,
+                decoration: const InputDecoration(
+                  labelText: 'Event Description',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Start Time Field with consistent styling
               TextField(
                 controller: _startTimeController,
                 readOnly: true,
-                decoration: const InputDecoration(labelText: 'Start Time'),
-                onTap: () => _selectStartTime(context),
+                decoration: const InputDecoration(
+                  labelText: 'Start Time',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
               ),
+              const SizedBox(height: 10),
+              // End Time Field with consistent styling
               TextField(
                 controller: _endTimeController,
                 readOnly: true,
-                decoration: const InputDecoration(labelText: 'End Time'),
-                onTap: () => _selectEndTime(context),
+                decoration: const InputDecoration(
+                  labelText: 'End Time',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
               ),
+              const SizedBox(height: 10),
+              // Latitude Field with consistent styling
               TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _latitude = value;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Latitude'),
+                onChanged: (value) => _latitude = value,
+                decoration: const InputDecoration(
+                  labelText: 'Latitude',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
               ),
+              const SizedBox(height: 10),
+              // Longitude Field with consistent styling
               TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _longitude = value;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Longitude'),
+                onChanged: (value) => _longitude = value,
+                decoration: const InputDecoration(
+                  labelText: 'Longitude',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
               ),
+              const SizedBox(height: 10),
+              // Instructions Field with consistent styling
               TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _instructions = value;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Instructions'),
+                onChanged: (value) => _instructions = value,
+                decoration: const InputDecoration(
+                  labelText: 'Instructions',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                ),
               ),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: createEvent,
                 child: const Text('Create Event'),
               ),
-              if (_createMessage.isNotEmpty) Text(_createMessage),
+              if (_createMessage.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(_createMessage, style: const TextStyle(color: Colors.red)),
+              ],
 
-              const SizedBox(height: 16),
-
-              // Event list section
+              // Event display section
+              const SizedBox(height: 40),
               const Text(
-                'Manage Existing Events',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                'Events',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              if (_events.isEmpty)
-                const Center(child: Text('No events found.'))
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _events.length,
-                  itemBuilder: (context, index) {
-                    final event = _events[index];
-                    final startTime = DateTime.parse(event['datetimeStart']);
-                    final endTime = DateTime.parse(event['datetimeEnd']);
-                    final latitude = event['location']['latitude'].toString();
-                    final longitude = event['location']['longitude'].toString();
-                    final instructions =
-                        event['metadata']['instructions'] ?? 'No instructions';
+              ..._events.map(
+                (event) {
+                  return ListTile(
+                    title: Text(event['title']),
+                    subtitle: Text(event['datetimeStart']),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove_red_eye),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EventDetailPage(
+                                  token: widget.token,
+                                  eventId: event['id'].toString(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () async {
+                            final success = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditEventPage(
+                                  token: widget.token,
+                                  eventId: event['id'].toString(),
+                                ),
+                              ),
+                            );
 
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 8.0,
-                          horizontal: 10.0), // Space around each event
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: Colors.grey,
-                            width: 1.5), // Border color and width
-                        borderRadius:
-                            BorderRadius.circular(8.0), // Rounded corners
-                      ),
-                      child: ListTile(
-                        title: Text(event['title']),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Description: ${event['description']}'),
-                            Text('Start Time: ${startTime.toLocal()}'),
-                            Text('End Time: ${endTime.toLocal()}'),
-                            Text('Latitude: $latitude'),
-                            Text('Longitude: $longitude'),
-                            Text('Instructions: $instructions'),
-                          ],
+                            if (success != null && success) {
+                              fetchEvents(); // Refresh event list after edit
+                            }
+                          },
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove_red_eye),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => EventDetailPage(
-                                      token: widget.token,
-                                      eventId: event['id'].toString(),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () {
-                                deleteEvent(event['id'].toString());
-                              },
-                            ),
-                          ],
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            deleteEvent(event['id'].toString());
+                          },
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      ],
+                    ),
+                  );
+                },
+              ),
               if (_deleteMessage.isNotEmpty) Text(_deleteMessage),
             ],
           ),

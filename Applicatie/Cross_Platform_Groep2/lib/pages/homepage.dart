@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CreateTeamPage(
+                      builder: (context) => ManageTeamsPage(
                         token: widget.token,
                       ),
                     ),
