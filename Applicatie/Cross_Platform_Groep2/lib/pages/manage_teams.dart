@@ -3,38 +3,45 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'view_team.dart';
+import 'edit_team.dart';
 
-class CreateTeamPage extends StatefulWidget {
+class ManageTeamsPage extends StatefulWidget {
   final String token;
 
-  const CreateTeamPage({super.key, required this.token});
+  const ManageTeamsPage({super.key, required this.token});
 
   @override
-  _CreateTeamPageState createState() => _CreateTeamPageState();
+  _ManageTeamsPageState createState() => _ManageTeamsPageState();
 }
 
-class _CreateTeamPageState extends State<CreateTeamPage> {
+class _ManageTeamsPageState extends State<ManageTeamsPage> {
   String _teamName = '';
   String _teamDescription = '';
   String _createMessage = '';
   String _deleteMessage = '';
+  String _addUserMessage = '';
   String _editMessage = '';
-  String _teamIdToEdit = '';
-  String _newTeamName = '';
-  String _newTeamDescription = '';
   String _teamIdToDelete = '';
+  String _teamIdToAddUser = '';
+  String _userIdToAdd = '';
+  String _teamIdToEdit = '';
   String _fetchMessage = '';
   List<dynamic> _teams = [];
   String _username = '';
+
+  final GlobalKey<FormState> _createFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _deleteFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _addUserFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _editFormKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
     _loadUsername();
-    fetchTeams(); // Initial fetch
+    fetchTeams();
   }
 
-  // Load username from SharedPreferences
   Future<void> _loadUsername() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -42,7 +49,6 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
     });
   }
 
-  // Function to fetch teams
   Future<void> fetchTeams() async {
     if (widget.token.isNotEmpty) {
       final headers = {
@@ -61,7 +67,6 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
               jsonDecode(response.body) as Map<String, dynamic>;
           final allTeams = responseJson['data'] as List<dynamic>;
 
-          // Filter teams by username
           final userTeams = allTeams.where((team) {
             final members = team['members'] as List<dynamic>;
             return members.any((member) =>
@@ -90,9 +95,7 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
     }
   }
 
-  // Function to edit a team
-  Future<void> editTeam(
-      String teamId, String newTeamName, String newTeamDescription) async {
+  Future<void> createTeam(String teamName, String teamDescription) async {
     final headers = {
       HttpHeaders.authorizationHeader: 'Bearer ${widget.token}',
       'Content-Type': 'application/json',
@@ -100,33 +103,32 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
     };
 
     try {
-      final response = await http.put(
-        Uri.parse('https://team-management-api.dops.tech/api/v2/teams/$teamId'),
+      final response = await http.post(
+        Uri.parse('https://team-management-api.dops.tech/api/v2/teams'),
         headers: headers,
         body: jsonEncode({
-          'name': newTeamName,
-          'description': newTeamDescription,
+          'name': teamName,
+          'description': teamDescription,
         }),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         setState(() {
-          _editMessage = 'Team updated successfully!';
+          _createMessage = 'Team created successfully!';
         });
-        fetchTeams(); // Refresh the teams list after editing
+        fetchTeams();
       } else {
         setState(() {
-          _editMessage = 'Failed to update team: ${response.body}';
+          _createMessage = 'Failed to create team: ${response.body}';
         });
       }
     } catch (e) {
       setState(() {
-        _editMessage = 'An error occurred: $e';
+        _createMessage = 'An error occurred: $e';
       });
     }
   }
 
-  // Function to delete a team
   Future<void> deleteTeam(String teamId) async {
     final headers = {
       HttpHeaders.authorizationHeader: 'Bearer ${widget.token}',
@@ -139,27 +141,12 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
         headers: headers,
       );
 
-      if (response.statusCode == 200 || response.statusCode == 204) {
+      if (response.statusCode == 200) {
         setState(() {
-          _deleteMessage = 'Team deleted successfully';
+          _deleteMessage = 'Team deleted successfully!';
         });
-        fetchTeams(); // Re-fetch teams after deletion
+        fetchTeams();
       } else {
-        // Parse response body for detailed error message
-        final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
-        final errorMessage =
-            responseBody['message']?.toString() ?? 'Unknown error';
-
-        // Check for specific error cases
-        if (errorMessage.toLowerCase().contains('teamnotfound')) {
-          setState(() {
-            _deleteMessage = 'Failed to delete team: Team not found';
-          });
-        } else {
-          setState(() {
-            _deleteMessage = 'Failed to delete team: Team does not exist.';
-          });
-        }
         setState(() {
           _deleteMessage = 'Failed to delete team: ${response.body}';
         });
@@ -171,33 +158,48 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
     }
   }
 
-  // Function to create a team
-  Future<void> createTeam(String teamName, String teamDescription) async {
+  Future<void> addUserToTeam(String teamId, String userId) async {
     final headers = {
       HttpHeaders.authorizationHeader: 'Bearer ${widget.token}',
       'Content-Type': 'application/json',
       'accept': 'application/json',
     };
 
-    final response = await http.post(
-      Uri.parse('https://team-management-api.dops.tech/api/v2/teams'),
-      headers: headers,
-      body: jsonEncode({
-        'name': teamName,
-        'description': teamDescription,
-      }),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'https://team-management-api.dops.tech/api/v2/teams/$teamId/addUser'),
+        headers: headers,
+        body: jsonEncode({
+          'userId': userId,
+        }),
+      );
 
-    if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
+        setState(() {
+          _addUserMessage = 'User added successfully!';
+        });
+        fetchTeams(); // Refresh the teams list after adding the user
+      } else {
+        final responseJson = jsonDecode(response.body);
+        final errorMessage = responseJson['error'] ?? 'Unknown error occurred';
+
+        setState(() {
+          _addUserMessage = 'Failed to add user: $errorMessage';
+        });
+      }
+    } catch (e) {
       setState(() {
-        _createMessage = 'Team created successfully';
-      });
-      fetchTeams(); // Refresh teams after creation
-    } else {
-      setState(() {
-        _createMessage = 'Failed to create team: ${response.body}';
+        _addUserMessage = 'An error occurred: $e';
       });
     }
+  }
+
+  String? validateInput(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'This field is required';
+    }
+    return null;
   }
 
   @override
@@ -213,122 +215,55 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                'Create Team',
+                'Create New Team',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _teamName = value;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Team Name',
-                  border: OutlineInputBorder(),
+              Form(
+                key: _createFormKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      onChanged: (value) {
+                        setState(() {
+                          _teamName = value;
+                        });
+                      },
+                      validator: validateInput,
+                      decoration: const InputDecoration(
+                        labelText: 'Team Name',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      onChanged: (value) {
+                        setState(() {
+                          _teamDescription = value;
+                        });
+                      },
+                      validator: validateInput,
+                      decoration: const InputDecoration(
+                        labelText: 'Team Description',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_createFormKey.currentState!.validate()) {
+                          createTeam(_teamName, _teamDescription);
+                        }
+                      },
+                      child: const Text('Create Team'),
+                    ),
+                    Text(
+                      _createMessage,
+                      style: const TextStyle(color: Colors.green),
+                    ),
+                    const Divider(height: 40, thickness: 1),
+                  ],
                 ),
               ),
-              const SizedBox(height: 10),
-              TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _teamDescription = value;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Team Description',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  createTeam(_teamName, _teamDescription);
-                },
-                child: const Text('Create Team'),
-              ),
-              Text(
-                _createMessage,
-                style: const TextStyle(color: Colors.green),
-              ),
-              const Divider(height: 40, thickness: 1),
-              const Text(
-                'Edit Team',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _teamIdToEdit = value;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Team ID',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _newTeamName = value;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'New Team Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _newTeamDescription = value;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'New Team Description',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  editTeam(_teamIdToEdit, _newTeamName, _newTeamDescription);
-                },
-                child: const Text('Edit Team'),
-              ),
-              Text(
-                _editMessage,
-                style: const TextStyle(color: Colors.blue),
-              ),
-              const Divider(height: 40, thickness: 1),
-              const Text(
-                'Delete Team',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _teamIdToDelete = value;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: 'Team ID',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  deleteTeam(_teamIdToDelete);
-                },
-                child: const Text('Delete Team'),
-              ),
-              Text(
-                _deleteMessage,
-                style: const TextStyle(color: Colors.red),
-              ),
-              const Divider(height: 40, thickness: 1),
               ElevatedButton(
                 onPressed: fetchTeams,
                 child: const Text('Fetch your Teams'),
@@ -355,7 +290,6 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
                               children: [
                                 Text('Team ID: ${team['id']}'),
                                 const SizedBox(height: 8),
-                                const Text('Members:'),
                                 Text('Description: $description'),
                                 const SizedBox(height: 8),
                                 const Text('Members:'),
@@ -363,11 +297,113 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
                                   Text('- ${member['name']}'),
                               ],
                             ),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize
+                                      .min, // To prevent buttons from taking up too much space
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.add),
+                                      onPressed: () {
+                                        setState(() {
+                                          _teamIdToAddUser =
+                                              team['id'].toString();
+                                        });
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title:
+                                                const Text('Add User to Team'),
+                                            content: Form(
+                                              key: _addUserFormKey,
+                                              child: TextFormField(
+                                                decoration:
+                                                    const InputDecoration(
+                                                  labelText: 'User ID',
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    _userIdToAdd = value;
+                                                  });
+                                                },
+                                                validator: validateInput,
+                                              ),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text('Cancel'),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () {
+                                                  if (_addUserFormKey
+                                                      .currentState!
+                                                      .validate()) {
+                                                    addUserToTeam(
+                                                        _teamIdToAddUser,
+                                                        _userIdToAdd);
+                                                    Navigator.of(context).pop();
+                                                  }
+                                                },
+                                                child: const Text('Add User'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.remove_red_eye),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ViewTeamPage(
+                                              token: widget.token,
+                                              teamId: team['id'].toString(),
+                                            ),
+                                          ),
+                                        ).then((_) =>
+                                            fetchTeams()); // Refresh after viewing
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => EditTeamPage(
+                                              token: widget.token,
+                                              teamId: team['id'].toString(),
+                                            ),
+                                          ),
+                                        ).then((_) =>
+                                            fetchTeams()); // Refresh after editing
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete),
+                                      onPressed: () {
+                                        deleteTeam(team['id'].toString());
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
                     )
                   : Text(_fetchMessage),
+              if (_deleteMessage.isNotEmpty) Text(_deleteMessage),
+              if (_addUserMessage.isNotEmpty) Text(_addUserMessage),
             ],
           ),
         ),

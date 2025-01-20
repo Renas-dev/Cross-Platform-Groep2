@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../lib/pages/homepage.dart';
+import 'package:cross_platform_groep2/pages/homepage.dart';
 
 void main() {
   setUp(() {
@@ -9,9 +9,11 @@ void main() {
     SharedPreferences.setMockInitialValues({'username': 'TestUser'});
   });
 
-  testWidgets('Should display username on HomePage', (WidgetTester tester) async {
+  testWidgets('Should display username on HomePage',
+      (WidgetTester tester) async {
     // Build the HomePage widget
-    await tester.pumpWidget(MaterialApp(home: HomePage(token: 'mockToken')));
+    await tester
+        .pumpWidget(const MaterialApp(home: HomePage(token: 'mockToken')));
 
     // Wait for the widget to build and the async logic to complete
     await tester.pumpAndSettle();
