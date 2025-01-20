@@ -1,21 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cross_platform_groep2/main.dart' as app;
+
+Future<void> addDelay([int milliseconds = 3000]) async {
+  await Future.delayed(Duration(milliseconds: milliseconds));
+}
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-
-  setUp(() {
-    // Stel een mock SharedPreferences waarde in
-    SharedPreferences.setMockInitialValues({});
-  });
 
   testWidgets('Login test with valid credentials', (WidgetTester tester) async {
     // Start de app
     app.main();
     await tester.pumpAndSettle();
+
+    // Add delay for app initialization
+    await addDelay();
 
     // Vind de invoervelden en knop
     final Finder usernameField = find.byKey(const Key('username_field'));
@@ -24,13 +25,17 @@ void main() {
 
     // Vul de testgegevens in
     await tester.enterText(usernameField, 'Renas');
+    await addDelay();
     await tester.enterText(passwordField, 'Renas123');
+    await addDelay();
     await tester.tap(loginButton);
+    await addDelay();
 
     // Wacht tot de navigatie compleet is
     await tester.pumpAndSettle();
-
+    await addDelay();
     // Controleer of de navigatie naar de HomePage succesvol was
-    expect(find.textContaining('Welcome, Renas!'), findsOneWidget);
+    expect(find.text('Welcome, Renas!'), findsOneWidget);
+    await addDelay();
   });
 }
